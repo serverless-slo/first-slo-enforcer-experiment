@@ -1,0 +1,25 @@
+---
+  # Orders channel, where the input are published to
+  apiVersion: messaging.knative.dev/v1alpha1
+  kind: Channel
+  metadata:
+    name: orders
+    namespace: kcontainer
+---
+  apiVersion: messaging.knative.dev/v1alpha1
+  kind: Channel
+  metadata:
+    name: forward-1
+    namespace: kcontainer
+---
+  apiVersion: messaging.knative.dev/v1alpha1
+  kind: Channel
+  metadata:
+    name: forward-2
+    namespace: kcontainer
+---
+  apiVersion: messaging.knative.dev/v1alpha1
+  kind: Channel
+  metadata:
+    name: forward-3
+    namespace: kcontainer

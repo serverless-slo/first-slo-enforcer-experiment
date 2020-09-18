@@ -1,0 +1,75 @@
+---
+# SLO Observer whose is corresponding for collecting metrics
+# Observer deploment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sloorder-observer
+  namespace: kcontainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: sloorder-observer
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+      - name: sloorder-observer
+        image: docker.io/serverlessslo/sloorder-observer
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "2Gi"
+---
+# Service that exposes observer app.
+# This will be the subscriber for the Trigger
+kind: Service
+apiVersion: v1
+metadata:
+  name: sloorder-observer
+  namespace: kcontainer
+spec:
+  selector:
+    app: sloorder-observer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+# Access permissions that have to be granted to SLO Observer
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: kcontainer
+  name: resource-reader
+rules:
+- apiGroups: ["", "apps"] # "" indicates the core API group
+  resources: ["pods", "replicasets"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["slo.ibm.com"] # "" indicates the core API group
+  resources: ["slodescs"]
+  verbs: ["get", "watch", "list", "update", "patch"]
+- apiGroups: ["slo.ibm.com"] # "" indicates the core API group
+  resources: ["slodescs/status"]
+  verbs: ["get", "watch", "list", "update", "patch"]
+---
+# Knative Eventing subscriptions to trigger the observer service
+apiVersion: messaging.knative.dev/v1beta1
+kind: Subscription
+metadata:
+  name: observer-orderevents
+  namespace: kcontainer
+spec:
+  channel:
+    apiVersion: messaging.knative.dev/v1beta1
+    kind: Channel
+    name: orders
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: sloorder-observer
+    uri: /orderevents
+

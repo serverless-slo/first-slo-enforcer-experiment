@@ -1,0 +1,37 @@
+apiVersion: messaging.knative.dev/v1alpha1
+kind: KafkaChannel
+metadata:
+  name: my-kafka-channel
+  namespace: knative-eventing
+spec:
+  numPartitions: 200
+  replicationFactor: 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-ch-webhook
+  namespace: knative-eventing
+data:
+  # Configuration for defaulting channels that do not specify CRD implementations.
+  default-ch-config: |
+    clusterDefault:
+      apiVersion: messaging.knative.dev/v1alpha1
+      kind: KafkaChannel
+      spec:
+        numPartitions: 200
+        replicationFactor: 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-br-default-channel
+  namespace: knative-eventing
+data:
+  channelTemplateSpec: |
+    apiVersion: messaging.knative.dev/v1alpha1
+    kind: KafkaChannel
+    spec:
+      numPartitions: 200
+      replicationFactor: 1
+

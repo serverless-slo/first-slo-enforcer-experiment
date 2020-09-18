@@ -1,0 +1,95 @@
+# Optimal concurrency
+#   - 100m    10 (linear)
+#   - 200m    20 (linear)
+#   - 300m    30 (linear)
+#   - 400m    50 (linear)
+#   - 500m    100
+#   - 1000m   100
+#   - 2000m   100
+
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: forward-1
+  namespace: kcontainer
+spec:
+  template:
+    metadata:
+      annotations:
+        # autoscaling.knative.dev/maxScale: "1"
+        # Target 10 in-flight-requests per pod.
+        autoscaling.knative.dev/target: "10"
+    spec:
+      containers:
+      - name: "springcontainerms"
+        image: "serverlessslo/forwardsc:latest"
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "300Mi"
+          limits:
+            cpu: "100m"
+            memory: "300Mi"
+        env:
+          - name: ORDER_ENDPOINT
+            value: http://forward-1-kn-channel.kcontainer.svc.cluster.local
+---
+  apiVersion: serving.knative.dev/v1
+  kind: Service
+  metadata:
+    name: forward-2
+    namespace: kcontainer
+  spec:
+    template:
+      metadata:
+        annotations:
+          # autoscaling.knative.dev/maxScale: "1"
+          # Target 10 in-flight-requests per pod.
+          autoscaling.knative.dev/target: "10"
+      spec:
+        containers:
+        - name: "springcontainerms"
+          image: "serverlessslo/forwardsc:latest"
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "300Mi"
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+          env:
+            - name: ORDER_ENDPOINT
+              value: http://forward-2-kn-channel.kcontainer.svc.cluster.local
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: forward-3
+  namespace: kcontainer
+spec:
+  template:
+    metadata:
+      annotations:
+        # autoscaling.knative.dev/maxScale: "1"
+        # Target 10 in-flight-requests per pod.
+        autoscaling.knative.dev/target: "10"
+    spec:
+      containers:
+      - name: "springcontainerms"
+        image: "serverlessslo/forwardsc:latest"
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "300Mi"
+          limits:
+            cpu: "100m"
+            memory: "300Mi"
+        env:
+          - name: ORDER_ENDPOINT
+            value: http://forward-3-kn-channel.kcontainer.svc.cluster.local
+---     
+

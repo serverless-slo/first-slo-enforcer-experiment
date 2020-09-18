@@ -1,0 +1,26 @@
+# Observer deploment
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: "springcontainerms-service"
+  namespace: kcontainer
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        # Target 10 in-flight-requests per pod.
+        autoscaling.knative.dev/target: "10"
+    spec:
+      containers:
+      - name: "forwardsc"
+        image: "${DOCKER_USERNAME}/forwardsc"
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "300Mi"
+          limits:
+            cpu: "100m"
+            memory: "300Mi"
+            

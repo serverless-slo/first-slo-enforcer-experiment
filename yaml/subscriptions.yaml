@@ -1,0 +1,86 @@
+---
+apiVersion: messaging.knative.dev/v1alpha1
+kind: Subscription
+metadata:
+  name: forward-1-orderevents
+  namespace: kcontainer
+spec:
+  channel:
+    apiVersion: messaging.knative.dev/v1alpha1
+    kind: Channel
+    name: orders
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: forward-1
+    uri: /orderevents
+---
+  apiVersion: messaging.knative.dev/v1alpha1
+  kind: Subscription
+  metadata:
+    name: forward-2-orderevents
+    namespace: kcontainer
+  spec:
+    channel:
+      apiVersion: messaging.knative.dev/v1alpha1
+      kind: Channel
+      name: forward-1
+    subscriber:
+      ref:
+        apiVersion: v1
+        kind: Service
+        name: forward-2
+      uri: /orderevents
+---
+apiVersion: messaging.knative.dev/v1alpha1
+kind: Subscription
+metadata:
+  name: forward-3-orderevents
+  namespace: kcontainer
+spec:
+  channel:
+    apiVersion: messaging.knative.dev/v1alpha1
+    kind: Channel
+    name: forward-2
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: forward-3
+    uri: /orderevents
+---
+apiVersion: messaging.knative.dev/v1alpha1
+kind: Subscription
+metadata:
+  name: observer-forward-orderevents
+  namespace: kcontainer
+spec:
+  channel:
+    apiVersion: messaging.knative.dev/v1alpha1
+    kind: Channel
+    name: forward-3
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: sloorder-observer
+    uri: /orderevents
+---
+# Knative Eventing subscriptions to trigger the observer service
+apiVersion: messaging.knative.dev/v1beta1
+kind: Subscription
+metadata:
+  name: observer-orderevents
+  namespace: kcontainer
+spec:
+  channel:
+    apiVersion: messaging.knative.dev/v1beta1
+    kind: Channel
+    name: orders
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: sloorder-observer
+    uri: /orderevents

@@ -1,0 +1,26 @@
+---
+apiVersion: "slo.ibm.com/v1alpha1"
+kind: SLODesc
+metadata:
+  name: forward
+  namespace: kcontainer
+spec:
+  ratelimit: 200
+  rampup: 10
+  supportperiod: 10
+  tail:
+    enable: true
+    percentile: 95
+    latency: 1000
+  mean:
+    enable: false
+    range:
+      from: 400
+      to: 600
+  shape:
+    enable: false
+    stddev: 200
+  workflow:
+    topology: sequence
+    tasks: ["forward-1", "forward-2", "forward-3"]
+    # tasks: ["forward-1", "forward-2"]

@@ -1,0 +1,11 @@
+domain: slo.ibm.com
+layout: go.kubebuilder.io/v2
+projectName: faasslo
+repo: github.com/ngduchai/faasslo
+resources:
+- group: slo.ibm.com
+  kind: SLODesc
+  version: v1alpha1
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}

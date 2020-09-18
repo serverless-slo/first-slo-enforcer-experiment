@@ -1,0 +1,129 @@
+#!/usr/bin/env node
+const yargs = require("yargs");
+const axios = require("axios");
+const { v4: uuidv4 } = require('uuid');
+var dateFormat = require('dateformat');
+
+const command = yargs.command('create <n>', 'create n new random orders', (yargv) => { 
+    yargv.positional('n', {
+      describe: 'number of orders to create',
+      type: 'int'
+    })
+  })
+  .command('stress <rate> <duration>', 'Create orders continuously at a fixed rate', (yargv) => {
+    yargv.positional('rate', {
+      describe: 'input rate (orders per sec)',
+      type: 'float'
+    }),
+    yargv.positional('duration', {
+      describe: 'stress duration (sec)',
+      type: 'float'
+    })
+  })  
+  .demandCommand()
+  .help()
+  .argv
+
+  switch (command._[0]) {
+    case 'create':
+      url = "http://orders-kn-channel.kcontainer.svc.cluster.local";
+      console.log('creating orders at '+url); 
+      createOrders(command.n,url)
+      break;
+    case 'stress':
+      url = "http://orders-kn-channel.kcontainer.svc.cluster.local";
+      console.log('stress test at = ' + command.rate + " order/sec for " + command.duration + " seconds(s)...");
+      console.log('The functionality is disable, please try genorders instead');
+      break;
+  }
+
+  function createOrders(n, url) {
+    var addresses = [ 
+      {"street": "100 Main street", "city": "Oakland", "country": "USA", "state": "CA", "zipcode": "94501"},
+      {"street": "150 Meilong Road", "city": "Shanghai", "country": "China", "state": "", "zipcode": "200237"},
+      {"street": "476 9th Ave", "city": "NYC", "country": "USA", "state": "NY", "zipcode": "10018"},
+      {"street": "27-28, Rail Arch, New Mill Rd, Nine Elms", "city": "London", "country": "United Kingdom", "state": "", "zipcode": "SW8 5PP"},
+      {"street": "1628, 2095 Jerrold Ave", "city": "San Francisco", "country": "USA", "state": "CA", "zipcode": "94124"}
+    ];
+
+    var manuf = ['GoodManuf','OtherManuf'];
+    var products = ['Fresh product 1','Medical vaccin','Carrot','Fresh Product'];
+    // use a pickup date 3 days from now
+    var currentDate = new Date();
+    var pickupDate = new Date(currentDate.setTime( currentDate.getTime() + 3 * 86400000 )).toISOString();
+    // use a delivery date 20 days from the pickup day (23 days)
+    var expectedDeliveryDate = new Date(currentDate.setTime( currentDate.getTime() + 23 * 86400000 )).toISOString();
+
+
+    // get a random index for pickup location
+    pickupIndex = Math.floor(Math.random() * addresses.length);
+    // get a random index for delivery location - and ensure not the same index of pickup
+    deliveryIndex = Math.floor(Math.random() * addresses.length);
+    while (pickupIndex == deliveryIndex){
+      deliveryIndex = Math.floor(Math.random() * addresses.length);
+    }
+
+    for (var i = 0; i < n ; i++) {
+      // get random indexes for the other arrays
+      manufIndex = Math.floor(Math.random() * manuf.length);
+      prodIndex = Math.floor(Math.random() * products.length);
+      // build order
+      var payload = {
+        orderID: uuidv4(),
+        productID: products[prodIndex],
+        quantity: 1000,
+        customerID: manuf[manufIndex],
+        expectedDeliveryDate: expectedDeliveryDate,
+        pickupDate: pickupDate,
+        pickupAddress: addresses[pickupIndex],
+        destinationAddress: addresses[deliveryIndex],
+        status: "pending",
+      }
+
+      var eventtype = process.env.eventtype
+
+      order = {
+        timestamp: Date.now(),
+        version: 1,
+        payload: payload,
+        type: eventtype,
+      };
+
+      sendOrder(url, order);
+    }
+  }
+
+  // function initProducer() {
+  //   var producer = new Kafka.Producer({
+  //     "bootstrap.servers": "my-cluster-kafka-bootstrap.kafka:9092",
+  //     "acks": "1",
+  //     "enable.idempotence": false,
+  //   });
+  //   return producer;
+  // }
+
+  async function sendOrder(url, order) {
+    var eventId = order.payload.orderID;
+    var eventDate = dateFormat(new Date(), "yyyy-MM-dd'T'HH:mm:ssXXX");
+    headers = {
+      "X-B3-Flags": "1",
+      "CE-SpecVersion": "1.0",
+      "CE-Type": "OrderEvent",
+      //"CE-Time": eventDate,
+      "CE-ID": eventId,
+      "CE-Source": "dev.knative.ordereventsource",
+      "Content-Type": "application/json"
+    };
+    console.log("Sending " + JSON.stringify(order, null, 4));
+    return axios({
+      method: "post",
+      url: url,
+      data: order,
+      headers: headers
+    }).then(res => res.data)
+    .catch((err) => {
+      console.log("Error:" + err);
+    });
+  }
+
+
