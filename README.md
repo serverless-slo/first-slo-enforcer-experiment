@@ -1,1 +1,1 @@
-# first-slo-enforcer-experiment
+# slo-enforcer-experiment
